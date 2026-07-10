@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   GithubAuthProvider,
+  signOut,
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
 import {
@@ -101,11 +102,21 @@ function toGetLoggedInUser() {
     } else {
       console.log('--> user is not login ');
 
-      window.location = "/login.html"
+      if (window.location.pathname == "/signup.html" || window.location.pathname == "/login.html") {
+        console.log("--> already login ya signup ke page pe hun");
+      } else {
+        window.location.pathname == "/login.html"
+      }
     }
   });
 }
 
+function logOutUser() {
+  signOut(auth).then(() => {
+    window.location = "./login.html"
+  }).catch((error) => {
+  });
+}
 
 async function getSingleUserDetails(uniqueId) {
 
@@ -172,6 +183,7 @@ function githubsignup() {
 }
 
 
+
 export {
   signupFunction,
   loginFunction,
@@ -180,4 +192,5 @@ export {
   toGetLoggedInUser,
   googleSignup,
   githubsignup,
+  logOutUser
 }

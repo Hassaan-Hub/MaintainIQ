@@ -1,3 +1,15 @@
-import { toGetLoggedInUser } from "./confige/firebase.js";
+import {
+    toGetLoggedInUser,
+    logOutUser
+} from "./confige/firebase.js";
 
-// toGetLoggedInUser()
+toGetLoggedInUser()
+
+
+const logout = document.getElementById("logout");
+
+
+logout.addEventListener('click', () => {
+    console.log('--> log out chal gaya');
+    logOutUser()
+})

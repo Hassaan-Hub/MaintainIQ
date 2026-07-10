@@ -9,7 +9,7 @@ import {
   from "./confige/firebase.js";
 
 
-// toGetLoggedInUser()
+toGetLoggedInUser()
 
 
 const name = document.getElementById('name');
