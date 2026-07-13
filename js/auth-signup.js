@@ -3,6 +3,17 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from "https://w
 import { doc, setDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { showToast } from '/js/utils.js';
 
+function safeRedirect(url) {
+  const now = Date.now();
+  const last = parseInt(sessionStorage.getItem('_redirect_ts') || '0', 10);
+  if (now - last < 2000) {
+    console.error('[signup] Redirect loop blocked — last redirect', Math.round(now - last), 'ms ago. Target:', url);
+    return;
+  }
+  sessionStorage.setItem('_redirect_ts', String(now));
+  window.location.replace(url);
+}
+
 const form = document.getElementById('signupForm');
 const btn = document.getElementById('signupBtn');
 
@@ -39,7 +50,7 @@ form.addEventListener('submit', async (e) => {
     await sendEmailVerification(cred.user);
 
     showToast('Account created! Verification email sent.', 'success');
-    setTimeout(() => { window.location.href = '/dashboard.html'; }, 1500);
+    setTimeout(() => { safeRedirect('/dashboard.html'); }, 1500);
   } catch (err) {
     console.error(err);
     let msg = 'Signup failed. Please try again.';

@@ -1,7 +1,7 @@
-import { db } from './firebase-config.js';
+import { db } from '/js/firebase-config.js';
 import { collection, addDoc, updateDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
-import { storage } from './firebase-config.js';
+import { storage } from '/js/firebase-config.js';
 
 export function showToast(message, type = 'info') {
   const existing = document.querySelector('.toast');

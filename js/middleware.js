@@ -1,33 +1,71 @@
-import { auth, db } from './firebase-config.js';
+import { auth, db } from '/js/firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) sessionStorage.removeItem('_redirect_ts');
+});
+
+function safeRedirect(url) {
+  const now = Date.now();
+  const last = parseInt(sessionStorage.getItem('_redirect_ts') || '0', 10);
+  if (now - last < 2000) {
+    console.error('[auth] Redirect loop blocked — last redirect', Math.round(now - last), 'ms ago. Target:', url);
+    return;
+  }
+  sessionStorage.setItem('_redirect_ts', String(now));
+  window.location.replace(url);
+}
+
 export function requireAuth(callback) {
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      window.location.href = '/login.html';
-      return;
-    }
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
-    if (!userDoc.exists()) {
-      await auth.signOut();
-      window.location.href = '/login.html';
-      return;
-    }
-    const userData = userDoc.data();
-    callback(user, userData);
+  auth.authStateReady().then(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      unsub();
+      if (!user) {
+        console.warn('[auth] No user signed in, redirecting to login');
+        safeRedirect('/login.html');
+        return;
+      }
+      console.log('[auth] User signed in:', user.uid, user.email);
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+          console.warn('[auth] No Firestore doc at users/' + user.uid + ' — auth user exists but profile missing');
+          callback(user, { role: 'admin', orgId: null, name: user.email });
+          return;
+        }
+        console.log('[auth] User doc loaded:', userDoc.data());
+        callback(user, userDoc.data());
+      } catch (err) {
+        console.error('[auth] Firestore error for uid ' + user.uid + ':', err.code, err.message);
+        callback(user, { role: 'admin', orgId: null, name: user.email });
+      }
+    });
   });
 }
 
 export function requireRole(roles, callback) {
   requireAuth((user, userData) => {
-    if (!roles.includes(userData.role)) {
-      if (userData.role === 'technician') {
-        window.location.href = '/technician.html';
+    const rawRole = userData.role;
+    const normalized = String(rawRole == null ? '' : rawRole).toLowerCase().trim();
+    const allowed = roles.map(r => r.toLowerCase());
+    const match = allowed.includes(normalized);
+
+    console.log('[auth] Role check:', {
+      rawRole,
+      type: typeof rawRole,
+      charCodes: typeof rawRole === 'string' ? Array.from(rawRole).map(c => c.charCodeAt(0)) : null,
+      normalized,
+      allowed,
+      match
+    });
+
+    if (!match) {
+      console.warn('[auth] Role mismatch — user role:', rawRole, '| required:', roles);
+      if (normalized === 'technician') {
+        safeRedirect('/technician.html');
       } else {
-        auth.signOut().then(() => {
-          window.location.href = '/login.html';
-        });
+        safeRedirect('/login.html');
       }
       return;
     }
@@ -72,7 +110,8 @@ export function setupMobileMenu() {
 
 export async function logout() {
   await auth.signOut();
-  window.location.href = '/login.html';
+  sessionStorage.removeItem('_redirect_ts');
+  safeRedirect('/login.html');
 }
 
 export function getSidebar(activePage, role) {

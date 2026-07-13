@@ -2,8 +2,29 @@ import { auth } from '/js/firebase-config.js';
 import { signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { showToast } from '/js/utils.js';
 
-onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = '/dashboard.html';
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) sessionStorage.removeItem('_redirect_ts');
+});
+
+function safeRedirect(url) {
+  const now = Date.now();
+  const last = parseInt(sessionStorage.getItem('_redirect_ts') || '0', 10);
+  if (now - last < 2000) {
+    console.error('[login] Redirect loop blocked — last redirect', Math.round(now - last), 'ms ago. Target:', url);
+    return;
+  }
+  sessionStorage.setItem('_redirect_ts', String(now));
+  window.location.replace(url);
+}
+
+auth.authStateReady().then(() => {
+  const unsub = onAuthStateChanged(auth, (user) => {
+    unsub();
+    if (user) {
+      console.log('[login] Already signed in as', user.email, '— redirecting to dashboard');
+      safeRedirect('/dashboard.html');
+    }
+  });
 });
 
 const form = document.getElementById('loginForm');
@@ -18,10 +39,10 @@ form.addEventListener('submit', async (e) => {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     await signInWithEmailAndPassword(auth, email, password);
-    showToast('Login successful!', 'success');
-    setTimeout(() => { window.location.href = '/dashboard.html'; }, 800);
+    console.log('[login] Sign-in successful — redirecting to dashboard');
+    safeRedirect('/dashboard.html');
   } catch (err) {
-    console.error(err);
+    console.error('[login] Sign-in error:', err.code, err.message);
     let msg = 'Login failed. Check your credentials.';
     if (err.code === 'auth/user-not-found') msg = 'No account found with this email.';
     if (err.code === 'auth/wrong-password') msg = 'Incorrect password.';

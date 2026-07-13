@@ -40,7 +40,7 @@
     </div>
 
     <div class="filter-bar">
-      <input type="text" placeholder="Search assets..." id="searchInput" class="min-w-[200px]">
+      <input type="text" placeholder="Search assets..." id="searchInput">
       <select id="categoryFilter">
         <option value="">All Categories</option>
         <option>HVAC</option>
@@ -95,7 +95,7 @@
             <label>Asset Name *</label>
             <input type="text" id="assetName" placeholder="e.g. AC Unit - Room 204" required>
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="input-group">
               <label>Category *</label>
               <select id="assetCategory" required>
@@ -124,7 +124,7 @@
             <label>Location (Building, Floor, Room)</label>
             <input type="text" id="assetLocation" placeholder="e.g. Main Building, 2nd Floor, Room 204">
           </div>
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div class="input-group">
               <label>Install Date</label>
               <input type="date" id="assetInstallDate">
