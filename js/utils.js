@@ -3,7 +3,6 @@ import { collection, addDoc, updateDoc, doc, serverTimestamp } from "https://www
 import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import { storage } from './firebase-config.js';
 
-// Toast notification
 export function showToast(message, type = 'info') {
   const existing = document.querySelector('.toast');
   if (existing) existing.remove();
@@ -20,7 +19,6 @@ export function showToast(message, type = 'info') {
   }, 3500);
 }
 
-// Format Firestore timestamp
 export function formatDate(timestamp) {
   if (!timestamp) return 'N/A';
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
@@ -47,7 +45,6 @@ export function timeAgo(timestamp) {
   return formatDate(timestamp);
 }
 
-// Write service history entry
 export async function writeServiceHistory(assetId, orgId, action, performedBy, notes = '', issueId = null) {
   const entry = {
     assetId,
@@ -61,7 +58,6 @@ export async function writeServiceHistory(assetId, orgId, action, performedBy, n
   return addDoc(collection(db, 'serviceHistory'), entry);
 }
 
-// Upload file to Firebase Storage
 export async function uploadFile(file, path) {
   try {
     const storageRef = ref(storage, path);
@@ -78,12 +74,10 @@ export async function uploadFile(file, path) {
   }
 }
 
-// Generate unique ID
 export function generateId() {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// Status colors
 export function statusBadge(status) {
   const map = {
     operational: 'badge-success',
@@ -105,7 +99,6 @@ export function statusBadge(status) {
   return `<span class="badge ${map[status] || 'badge-secondary'}">${label}</span>`;
 }
 
-// Category icons (SVG)
 export function categoryIcon(category) {
   const icons = {
     HVAC: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M3 12h18M5.5 5.5l13 13M18.5 5.5l-13 13"/></svg>',
@@ -116,7 +109,6 @@ export function categoryIcon(category) {
   return icons[category] || icons.default;
 }
 
-// Modal helpers
 export function openModal(id) {
   document.getElementById(id).classList.add('active');
 }
@@ -125,7 +117,6 @@ export function closeModal(id) {
   document.getElementById(id).classList.remove('active');
 }
 
-// Setup modal close handlers
 export function setupModals() {
   document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
@@ -139,12 +130,10 @@ export function setupModals() {
   });
 }
 
-// Get URL params
 export function getParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
 
-// Escape HTML
 export function esc(str) {
   const div = document.createElement('div');
   div.textContent = str || '';

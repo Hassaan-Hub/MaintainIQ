@@ -2,16 +2,15 @@ import { auth, db } from './firebase-config.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Check auth state and redirect accordingly
 export function requireAuth(callback) {
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
       window.location.href = '/login.html';
       return;
     }
-    // Get user profile from Firestore
     const userDoc = await getDoc(doc(db, 'users', user.uid));
     if (!userDoc.exists()) {
+      await auth.signOut();
       window.location.href = '/login.html';
       return;
     }
@@ -20,18 +19,22 @@ export function requireAuth(callback) {
   });
 }
 
-// Require specific roles
 export function requireRole(roles, callback) {
   requireAuth((user, userData) => {
     if (!roles.includes(userData.role)) {
-      window.location.href = '/dashboard.html';
+      if (userData.role === 'technician') {
+        window.location.href = '/technician.html';
+      } else {
+        auth.signOut().then(() => {
+          window.location.href = '/login.html';
+        });
+      }
       return;
     }
     callback(user, userData);
   });
 }
 
-// Setup sidebar navigation highlighting
 export function setupNav(currentPage) {
   document.querySelectorAll('.sidebar nav a').forEach(a => {
     if (a.dataset.page === currentPage) {
@@ -40,7 +43,6 @@ export function setupNav(currentPage) {
   });
 }
 
-// Populate user info in sidebar
 export function populateUser(userData) {
   const nameEl = document.getElementById('sidebar-user-name');
   const roleEl = document.getElementById('sidebar-user-role');
@@ -50,7 +52,6 @@ export function populateUser(userData) {
   if (avatarEl) avatarEl.textContent = (userData.name || userData.email || '?')[0].toUpperCase();
 }
 
-// Mobile menu toggle
 export function setupMobileMenu() {
   const btn = document.querySelector('.mobile-menu-btn');
   const sidebar = document.querySelector('.sidebar');
@@ -62,20 +63,18 @@ export function setupMobileMenu() {
       }
     });
   }
+
+  const logoutBtn = document.getElementById('sidebarLogoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => logout());
+  }
 }
 
-// Logout
 export async function logout() {
   await auth.signOut();
   window.location.href = '/login.html';
 }
 
-// Make logout accessible globally for inline handlers
-if (typeof window !== 'undefined') {
-  window.appLogout = logout;
-}
-
-// Sidebar HTML template
 export function getSidebar(activePage, role) {
   const navItems = [];
 
@@ -108,16 +107,16 @@ export function getSidebar(activePage, role) {
       <h2>MaintainIQ</h2>
     </div>
     <nav>${navHTML}</nav>
-    <div style="padding:0 1.5rem;margin-top:auto;border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem;">
-      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
-        <div id="sidebar-user-avatar" style="width:36px;height:36px;border-radius:50%;background:#2563eb;display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:0.875rem;">?</div>
+    <div class="px-6 mt-auto border-t border-white/10 pt-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div id="sidebar-user-avatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">?</div>
         <div>
-          <div id="sidebar-user-name" style="font-size:0.875rem;font-weight:500;">Loading...</div>
-          <div id="sidebar-user-role" style="font-size:0.75rem;color:#94a3b8;"></div>
+          <div id="sidebar-user-name" class="text-sm font-medium">Loading...</div>
+          <div id="sidebar-user-role" class="text-xs text-slate-400"></div>
         </div>
       </div>
-      <button onclick="window.appLogout()" class="btn btn-secondary btn-sm" style="width:100%;color:#94a3b8;border-color:rgba(255,255,255,0.1);">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      <button id="sidebarLogoutBtn" class="btn btn-secondary btn-sm w-full text-slate-400 border-white/10">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
         Sign Out
       </button>
     </div>

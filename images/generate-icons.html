@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MaintainIQ — Icon Generator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
+    .container { max-width: 700px; width: 100%; }
+    h1 { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+    .preview-row { display: flex; gap: 1.5rem; align-items: flex-end; margin-bottom: 2rem; flex-wrap: wrap; }
+    .preview-item { text-align: center; }
+    .preview-item canvas { border: 1px solid #334155; border-radius: 8px; background: transparent; display: block; margin-bottom: 0.5rem; }
+    .preview-item span { font-size: 0.75rem; color: #94a3b8; }
+    .btn-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .btn { padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; font-size: 0.9375rem; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #1e293b; color: #e2e8f0; border: 1px solid #334155; }
+    .btn-secondary:hover { background: #334155; }
+    .file-list { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.25rem; }
+    .file-list h3 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+    .file-item { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #1a2332; }
+    .file-item:last-child { border-bottom: none; }
+    .file-name { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.8125rem; color: #e2e8f0; }
+    .file-size { font-size: 0.75rem; color: #64748b; }
+    .file-item canvas { width: 20px; height: 20px; border-radius: 2px; margin-right: 0.75rem; }
+    .file-left { display: flex; align-items: center; }
+    .note { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1rem; margin-top: 1.5rem; font-size: 0.8125rem; color: #94a3b8; line-height: 1.6; }
+    .note strong { color: #e2e8f0; }
+    .status { font-size: 0.875rem; color: #22c55e; margin-bottom: 1rem; display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MaintainIQ Icon Generator</h1>
+    <p class="subtitle">Generates all favicon and PWA icon sizes from the SVG source. Click "Generate & Download All" to get your complete icon package.</p>
+
+    <div class="preview-row" id="previewRow"></div>
+
+    <p class="status" id="status">All icons generated successfully. Downloads starting...</p>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="generateAll()">Generate & Download All</button>
+      <button class="btn btn-secondary" onclick="downloadManifest()">Download site.webmanifest</button>
+    </div>
+
+    <div class="file-list">
+      <h3>Icon Package</h3>
+      <div id="fileList"></div>
+    </div>
+
+    <div class="note">
+      <strong>How to use:</strong> Click the button above to generate and download all icon files.
+      Place them in your project's <code>images/</code> folder.
+      The <code>site.webmanifest</code> file should go in your project root.
+      All HTML files have already been configured with the correct favicon link tags.
+    </div>
+  </div>
+
+  <canvas id="hiddenCanvas" style="display:none;"></canvas>
+
+  <script>
+    const ICON_SIZES = [
+      { name: 'favicon-16x16.png', size: 16 },
+      { name: 'favicon-32x32.png', size: 32 },
+      { name: 'apple-touch-icon.png', size: 180 },
+      { name: 'android-chrome-192x192.png', size: 192 },
+      { name: 'android-chrome-512x512.png', size: 512 },
+      { name: 'favicon.png', size: 64 },
+    ];
+
+    const SVG_SOURCE = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#2563eb"/>
+      <path d="M2 12l10 5 10-5" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M2 17l10 5 10-5" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </svg>`;
+
+    const svgBlob = new Blob([SVG_SOURCE], { type: 'image/svg+xml' });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const img = new Image();
+
+    img.onload = () => {
+      renderPreviews();
+    };
+    img.src = svgUrl;
+
+    function renderPreviews() {
+      const row = document.getElementById('previewRow');
+      const sizes = [16, 32, 48, 64, 128, 180, 192];
+      sizes.forEach(size => {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+
+        const item = document.createElement('div');
+        item.className = 'preview-item';
+
+        const displayCanvas = document.createElement('canvas');
+        const displaySize = Math.min(size, 96);
+        displayCanvas.width = displaySize;
+        displayCanvas.height = displaySize;
+        displayCanvas.style.width = displaySize + 'px';
+        displayCanvas.style.height = displaySize + 'px';
+        displayCanvas.getContext('2d').drawImage(img, 0, 0, displaySize, displaySize);
+
+        const label = document.createElement('span');
+        label.textContent = `${size}x${size}`;
+
+        item.appendChild(displayCanvas);
+        item.appendChild(label);
+        row.appendChild(item);
+      });
+
+      renderFileList();
+    }
+
+    function renderFileList() {
+      const list = document.getElementById('fileList');
+      const allFiles = [
+        { name: 'favicon.ico', desc: 'ICO format (32x32)', size: '1 KB' },
+        ...ICON_SIZES.map(f => ({ name: f.name, desc: `PNG ${f.size}x${f.size}`, size: f.size <= 32 ? '< 1 KB' : f.size <= 64 ? '1 KB' : f.size <= 192 ? '2-5 KB' : '5-15 KB' })),
+        { name: 'site.webmanifest', desc: 'Web App Manifest', size: '< 1 KB' },
+      ];
+
+      allFiles.forEach(file => {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 20;
+        canvas.height = 20;
+        canvas.style.width = '20px';
+        canvas.style.height = '20px';
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, 20, 20);
+
+        const left = document.createElement('div');
+        left.className = 'file-left';
+        left.appendChild(canvas);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-name';
+        nameSpan.textContent = file.name;
+        left.appendChild(nameSpan);
+
+        const sizeSpan = document.createElement('span');
+        sizeSpan.className = 'file-size';
+        sizeSpan.textContent = file.desc + ' — ' + file.size;
+
+        item.appendChild(left);
+        item.appendChild(sizeSpan);
+        list.appendChild(item);
+      });
+    }
+
+    function renderSize(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      return canvas;
+    }
+
+    function canvasToBlob(canvas, type) {
+      return new Promise(resolve => canvas.toBlob(resolve, type));
+    }
+
+    async function downloadFile(filename, blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    async function generateICO() {
+      const sizes = [16, 32, 48];
+      const pngDataUrls = [];
+
+      for (const size of sizes) {
+        const canvas = renderSize(size);
+        pngDataUrls.push({ size, data: canvas.toDataURL('image/png') });
+      }
+
+      const ICO_HEADER = new Uint8Array(6);
+      ICO_HEADER[0] = 0;
+      ICO_HEADER[1] = 0;
+      ICO_HEADER[2] = 1;
+      ICO_HEADER[3] = 0;
+      ICO_HEADER[4] = sizes.length;
+      ICO_HEADER[5] = 0;
+
+      const pngBuffers = [];
+      for (const item of pngDataUrls) {
+        const response = await fetch(item.data);
+        const buffer = await response.arrayBuffer();
+        pngBuffers.push({ size: item.size, buffer: new Uint8Array(buffer) });
+      }
+
+      const dirEntrySize = 16;
+      const headerSize = 6;
+      const dirSize = dirEntrySize * pngBuffers.length;
+      let dataOffset = headerSize + dirSize;
+
+      const icoBuffer = new Uint8Array(headerSize + dirSize + pngBuffers.reduce((s, b) => s + b.buffer.length, 0));
+      icoBuffer.set(ICO_HEADER, 0);
+
+      let offset = headerSize;
+      for (const entry of pngBuffers) {
+        icoBuffer[offset] = entry.size === 256 ? 0 : entry.size;
+        icoBuffer[offset + 1] = entry.size === 256 ? 0 : entry.size;
+        icoBuffer[offset + 2] = 0;
+        icoBuffer[offset + 3] = 0;
+        icoBuffer[offset + 4] = 1;
+        icoBuffer[offset + 5] = 0;
+        icoBuffer[offset + 6] = 32;
+        icoBuffer[offset + 7] = 0;
+        const view = new DataView(icoBuffer.buffer);
+        view.setUint16(offset + 8, 1, true);
+        view.setUint16(offset + 10, 32, true);
+        view.setUint32(offset + 12, entry.buffer.length, true);
+        view.setUint32(offset + 16, dataOffset, true);
+        dataOffset += entry.buffer.length;
+        offset += dirEntrySize;
+      }
+
+      for (const entry of pngBuffers) {
+        icoBuffer.set(entry.buffer, offset);
+        offset += entry.buffer.length;
+      }
+
+      return new Blob([icoBuffer], { type: 'image/x-icon' });
+    }
+
+    async function generateAll() {
+      const status = document.getElementById('status');
+      status.style.display = 'none';
+
+      const icoBlob = await generateICO();
+      await downloadFile('favicon.ico', icoBlob);
+
+      for (const file of ICON_SIZES) {
+        const canvas = renderSize(file.size);
+        const blob = await canvasToBlob(canvas, 'image/png');
+        await downloadFile(file.name, blob);
+      }
+
+      status.style.display = 'block';
+    }
+
+    function downloadManifest() {
+      const manifest = {
+        name: "MaintainIQ",
+        short_name: "MaintainIQ",
+        description: "Smart Maintenance Management Platform",
+        icons: [
+          { src: "images/android-chrome-192x192.png", sizes: "192x192", type: "image/png" },
+          { src: "images/android-chrome-512x512.png", sizes: "512x512", type: "image/png" }
+        ],
+        theme_color: "#2563eb",
+        background_color: "#ffffff",
+        display: "standalone",
+        start_url: "/",
+        scope: "/"
+      };
+
+      const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+      downloadFile('site.webmanifest', blob);
+    }
+  </script>
+</body>
+</html>
