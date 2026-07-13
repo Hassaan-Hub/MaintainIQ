@@ -45,13 +45,13 @@
           <h2 class="text-[1.5rem] font-bold" id="assetName"></h2>
           <p class="text-slate-500 text-sm" id="assetLocation"></p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex gap-2 flex-wrap">
           <button class="btn btn-secondary btn-sm" id="viewQrBtn">View QR</button>
           <a class="btn btn-primary btn-sm" id="publicLink" href="#" target="_blank">Public Page</a>
         </div>
       </div>
 
-      <div class="grid grid-cols-[1fr_2fr] gap-6 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 mb-6">
         <div class="card">
           <div id="assetPhoto" class="h-[200px] bg-slate-100 flex items-center justify-center rounded-xl overflow-hidden">
             <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" class="w-12 h-12"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
@@ -65,7 +65,7 @@
               <span class="badge badge-secondary" id="assetCategory"></span>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 text-sm">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               <div>
                 <div class="text-slate-500 mb-1">Location</div>
                 <div class="font-medium" id="detailLocation">-</div>
