@@ -31,10 +31,12 @@ requireRole(['admin', 'manager'], async (user, userData) => {
     return;
   }
 
-  const q = query(collection(db, 'assets'), where('orgId', '==', currentOrgId));
+  const q = query(collection(db, 'assets'));
   onSnapshot(q, (snap) => {
+    console.log('[assets] Snapshot fired — docs:', snap.size, 'empty:', snap.empty);
     assetsData = {};
     snap.forEach(d => { assetsData[d.id] = { id: d.id, ...d.data() }; });
+    console.log('[assets] assetsData keys:', Object.keys(assetsData));
     renderAssets();
   }, (err) => {
     console.error('[assets] Snapshot error:', err);

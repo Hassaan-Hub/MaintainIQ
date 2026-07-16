@@ -62,10 +62,12 @@ requireRole(['admin', 'manager'], async (user, userData) => {
     showToast('Error loading data: ' + err.message, 'error');
   }
 
-  const q = query(collection(db, 'issues'), where('orgId', '==', currentOrgId));
+  const q = query(collection(db, 'issues'));
   onSnapshot(q, (snap) => {
+    console.log('[issues] Snapshot fired — docs:', snap.size, 'empty:', snap.empty);
     issuesData = {};
     snap.forEach(d => { issuesData[d.id] = { id: d.id, ...d.data() }; });
+    console.log('[issues] issuesData keys:', Object.keys(issuesData));
     renderIssues();
   }, (err) => {
     console.error('[issues] Snapshot error:', err);

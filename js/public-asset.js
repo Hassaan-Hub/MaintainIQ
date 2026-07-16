@@ -57,13 +57,6 @@ async function loadAsset(id) {
     setTxt('assetInstall', asset.installDate || 'N/A');
     setTxt('assetWarranty', asset.warrantyExpiry || 'N/A');
 
-    if (asset.photoUrl) {
-      const section = document.getElementById('assetPhotoSection');
-      const photo = document.getElementById('assetPhoto');
-      if (section) section.style.display = 'block';
-      if (photo) { photo.src = asset.photoUrl; photo.alt = asset.name; }
-    }
-
     document.querySelectorAll('.tab-btns button').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btns button').forEach(b => b.classList.remove('active'));

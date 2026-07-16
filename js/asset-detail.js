@@ -51,7 +51,7 @@ requireAuth(async (user, userData) => {
     setTxt('detailInstall', asset.installDate || 'N/A');
     setTxt('detailWarranty', asset.warrantyExpiry || 'N/A');
 
-    const publicUrl = `/asset/${assetId}`;
+    const publicUrl = `/public-asset.html?id=${assetId}`;
     const publicLink = document.getElementById('publicLink');
     if (publicLink) publicLink.href = publicUrl;
 
